@@ -44,9 +44,13 @@ module CarrierWaveDirect
       if url.present?
         self.key = URI.parse(url).path # explicitly set key
       else
-        @key = "#{store_dir}/#{guid}/#{FILENAME_WILDCARD}"
+        @key = "#{store_root}/#{guid}/#{FILENAME_WILDCARD}"
       end
       @key
+    end
+
+    def store_root
+      store_dir
     end
 
     def has_key?
@@ -66,7 +70,7 @@ module CarrierWaveDirect
           'expiration' => Time.now.utc + options[:expiration],
           'conditions' => [
             ["starts-with", "$utf8", ""],
-            ["starts-with", "$key", store_dir],
+            ["starts-with", "$key", store_root],
             {"bucket" => fog_directory},
             {"acl" => acl},
             {"success_action_redirect" => success_action_redirect},
@@ -105,7 +109,7 @@ module CarrierWaveDirect
     end
 
     def key_regexp
-      /\A#{store_dir}\/[a-f\d\-]+\/.+\.#{extension_regexp}\z/
+      /\A#{store_root}\/[a-f\d\-]+\/.+\.#{extension_regexp}\z/
     end
 
     def extension_regexp
