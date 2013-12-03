@@ -22,11 +22,14 @@ module CarrierWaveDirect
       class FilenameFormatValidator < ::ActiveModel::EachValidator
         def validate_each(record, attribute, value)
           if record.new_record? && record.send("has_#{attribute}_upload?") && record.key !~ record.send(attribute).key_regexp
-            record.errors.add(
-              attribute,
-              :carrierwave_direct_filename_invalid,
-              :extension_white_list => record.send(attribute).extension_white_list
-            )
+            extensions = record.send(attribute).extension_white_list
+            message = I18n.t("errors.messages.carrierwave_direct_filename_invalid")
+
+            if extensions.present?
+              message += I18n.t("errors.messages.carrierwave_direct_allowed_extensions", :extensions => extensions.to_sentence)
+            end
+
+            record.errors.add(attribute, message)
           end
         end
       end
@@ -37,13 +40,21 @@ module CarrierWaveDirect
             remote_net_url = record.send("remote_#{attribute}_net_url")
             uploader = record.send(attribute)
             url_scheme_white_list = uploader.url_scheme_white_list
+
             if (remote_net_url !~ URI.regexp(url_scheme_white_list) || remote_net_url !~ /#{uploader.extension_regexp}\z/)
-              record.errors.add(
-                :"remote_#{attribute}_net_url",
-                :carrierwave_direct_remote_net_url_invalid,
-                :extension_white_list => uploader.extension_white_list,
-                :url_scheme_white_list => url_scheme_white_list
-              )
+              extensions = uploader.extension_white_list
+
+              message = I18n.t("errors.messages.carrierwave_direct_filename_invalid")
+
+              if extensions.present?
+                message += I18n.t("errors.messages.carrierwave_direct_allowed_extensions", :extensions => extensions.to_sentence)
+              end
+
+              if url_scheme_white_list.present?
+                message += I18n.t("errors.messages.carrierwave_direct_allowed_schemes", :schemes => url_scheme_white_list.to_sentence)
+              end
+
+              record.errors.add(:"remote_#{attribute}_net_url", message)
             end
           end
         end
@@ -123,4 +134,3 @@ module CarrierWaveDirect
 end
 
 Dir[File.dirname(__FILE__) << "/../locale/*.*"].each {|file| I18n.load_path << file }
-

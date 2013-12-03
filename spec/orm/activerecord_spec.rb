@@ -61,18 +61,19 @@ describe CarrierWaveDirect::ActiveRecord do
 
     shared_examples_for "an invalid filename" do
       it "should not be valid on create" do
-        subject.should_not be_valid
+        expect(subject).to_not be_valid
       end
 
       it "should be valid on update" do
         subject.save(:validate => false)
-        subject.should be_valid
+        expect(subject).to be_valid
       end
 
       it "should use i18n for the error messages" do
         subject.valid?
-        subject.errors[:video].should == [
-          I18n.t("errors.messages.carrierwave_direct_filename_invalid", :extension_white_list => %w{avi mp4})
+        expect(subject.errors[:video]).to eq [
+          I18n.t("errors.messages.carrierwave_direct_filename_invalid") +
+          I18n.t("errors.messages.carrierwave_direct_allowed_extensions", :extensions => %w{avi mp4}.to_sentence)
         ]
       end
     end
@@ -80,7 +81,22 @@ describe CarrierWaveDirect::ActiveRecord do
     shared_examples_for "a remote net url i18n error message" do
       it "should use i18n for the error messages" do
         subject.valid?
-        subject.errors[:remote_video_net_url].should == [I18n.t("errors.messages.carrierwave_direct_remote_net_url_invalid", i18n_options)]
+
+        messages = I18n.t("errors.messages.carrierwave_direct_filename_invalid")
+
+        if i18n_options
+          if i18n_options[:extension_white_list]
+            extensions = i18n_options[:extension_white_list].to_sentence
+            messages += I18n.t("errors.messages.carrierwave_direct_allowed_extensions", :extensions => extensions)
+          end
+
+           if i18n_options[:url_scheme_white_list]
+            schemes = i18n_options[:url_scheme_white_list].to_sentence
+            messages += I18n.t("errors.messages.carrierwave_direct_allowed_schemes", :schemes => schemes)
+          end
+        end
+
+        expect(subject.errors[:remote_video_net_url]).to eq [ messages ]
       end
     end
 
@@ -548,4 +564,3 @@ describe CarrierWaveDirect::ActiveRecord do
     end
   end
 end
-
