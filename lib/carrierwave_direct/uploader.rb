@@ -42,7 +42,7 @@ module CarrierWaveDirect
     def key
       return @key if @key.present?
       if url.present?
-        self.key = URI.parse(url).path # explicitly set key
+        self.key = URI.parse(url).path.gsub!(/^\//, "") # explicitly set key
       else
         @key = "#{store_root}/#{guid}/#{FILENAME_WILDCARD}"
       end
